@@ -20,43 +20,45 @@ function love.load()
             image = player_img,
             x = 64,
             y = 64,
-            r = 0,
+            visible = true
         },
         swing = {
             image = swing_img,
             x = 64,
             y = 64,
             r = 0,
+            visible = false
         }
     }
 
+    player = spriteLayer.sprites.player
+    swing = spriteLayer.sprites.swing
+
     function love.keypressed(key, scancode, isrepeat)
       local step = 8
-      local player_y = spriteLayer.sprites.player.y
-      local player_x = spriteLayer.sprites.player.x
 
-      if key == "escape" then
+      if scancode == "escape" then
         love.event.push("quit")
       end
-      if key == "w" and isrepeat == false then
-        spriteLayer.sprites.player.y = player_y - step
-        spriteLayer.sprites.swing.y = spriteLayer.sprites.player.y - step
-        spriteLayer.sprites.swing.x = spriteLayer.sprites.player.x
+      if scancode == "w" and isrepeat == false then
+        player.y = player.y - step
+        swing.y = player.y - step
+        swing.x = player.x
       end
-      if key == "s" and isrepeat == false then
-        spriteLayer.sprites.player.y = player_y + step
-        spriteLayer.sprites.swing.y = spriteLayer.sprites.player.y + step
-        spriteLayer.sprites.swing.x = spriteLayer.sprites.player.x
+      if scancode == "s" and isrepeat == false then
+        player.y = player.y + step
+        swing.y = player.y + step
+        swing.x = player.x
       end
-      if key == "a" and isrepeat == false then
-        spriteLayer.sprites.player.x = player_x - step
-        spriteLayer.sprites.swing.x = spriteLayer.sprites.player.x - step
-        spriteLayer.sprites.swing.y = spriteLayer.sprites.player.y
+      if scancode == "a" and isrepeat == false then
+        player.x = player.x - step
+        swing.x = player.x - step
+        swing.y = player.y
       end
-      if key == "d" and isrepeat == false then
-        spriteLayer.sprites.player.x = player_x + step
-        spriteLayer.sprites.swing.x = spriteLayer.sprites.player.x + step
-        spriteLayer.sprites.swing.y = spriteLayer.sprites.player.y
+      if scancode == "d" and isrepeat == false then
+        player.x = player.x + step
+        swing.x = player.x + step
+        swing.y = player.y
       end
     end
 
@@ -68,17 +70,32 @@ function love.load()
         for _, sprite in pairs(self.sprites) do
             local x = math.floor(sprite.x)
             local y = math.floor(sprite.y)
-            love.graphics.draw(sprite.image, x, y, 0)
+
+            if sprite.visible then
+              love.graphics.draw(sprite.image, x, y, 0)
+            end
         end
     end
 end
 
 function love.update(dt)
+    visible_timer = 100
+
+    if visible_timer == 0 then
+      visible_timer = 100
+      swing.visible = not swing.visible
+    end
+
+    visible_timer = visible_timer - 1
+
     map:update(dt)
 end
 
 function love.draw()
     love.graphics.scale(3)
+
+    love.graphics.setColor(0, 0, 0, 255)
+
     map:setDrawRange(0, 0, windowWidth, windowHeight)
 
     map:draw()
