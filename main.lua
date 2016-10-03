@@ -1,38 +1,54 @@
 debug = true
 
-cardImg = nil
+card2Img = nil
+healCardImg = nil
 cursorImg = nil
 hpImg = nil
+emptyHPImg = nil
 
-maxhp = 4
+maxhp = 5
 
 enemySelectedCard = 1
 enemyMoveTimer = 2
-enemyCardsY = 5
-enemyHP = maxhp
+enemyCardsY = 10
+enemyHP = 4
 enemyThinkingPips = 0
 thinkTick = 1
 thinkCounter = 0
+enemyShieldCounter = 0
 
 selectedCard = 1
 playerTurn = true
-playerCardsY = 100
-playerHP = maxhp
+playerCardsY = 110
+playerHP = 4
+playerShieldCounter = 0
 
 
 function playerExecuteCard(card)
   if card.type == "damage" then
-    enemyHP = enemyHP - 1
+    if enemyShieldCounter <= 0 then
+      enemyHP = enemyHP - 1
+    end
   elseif card.type == "healing" then
-    playerHP = playerHP + 1
+    if playerHP < maxhp then
+      playerHP = playerHP + 1
+    end
+  elseif card.type == "shield" then
+    playerShieldCounter = 2
   end
 end
 
 function enemyExecuteCard(card)
   if card.type == "damage" then
-    playerHP = playerHP - 1
+    if playerShieldCounter <= 0 then
+      playerHP = playerHP - 1
+    end
   elseif card.type == "healing" then
-    enemyHP = enemyHP + 1
+    if enemyHP < maxhp then
+      enemyHP = enemyHP + 1
+    end
+  elseif card.type == "shield" then
+    enemyShieldCounter = 2
   end
 end
 
@@ -45,32 +61,51 @@ function decrementEnemyMoveTimer(dt)
 end
 
 function love.load(arg)
-  cardImg = love.graphics.newImage('assets/card.png')
-  cardImg:setFilter("nearest", "nearest")
+  healCardImg = love.graphics.newImage('assets/healcard.png')
+  healCardImg:setFilter("nearest", "nearest")
+
+  shieldCardImg = love.graphics.newImage('assets/shieldcard.png')
+  shieldCardImg:setFilter("nearest", "nearest")
+
+  damCardImg = love.graphics.newImage('assets/damcard.png')
+  damCardImg:setFilter("nearest", "nearest")
 
   cursorImg = love.graphics.newImage("assets/cursor.png")
   cursorImg:setFilter("nearest", "nearest")
 
+  shieldImg = love.graphics.newImage("assets/shield.png")
+  shieldImg:setFilter("nearest", "nearest")
+
   hpImg = love.graphics.newImage("assets/heart.png")
   hpImg:setFilter("nearest", "nearest")
 
-  playerCards = {
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "healing"},
+  emptyHPImg = love.graphics.newImage("assets/emptyheart.png")
+  emptyHPImg:setFilter("nearest", "nearest")
+
+  thinkingImg = love.graphics.newImage("assets/thinking.png")
+  emptyHPImg:setFilter("nearest", "nearest")
+
+  possibleCards = {
+    {image = damCardImg, type = "damage"},
+    {image = damCardImg, type = "damage"},
+    {image = damCardImg, type = "damage"},
+    {image = damCardImg, type = "damage"},
+    {image = shieldCardImg, type = "shield"},
+    {image = healCardImg, type = "healing"}
   }
 
-  enemyCards = {
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "damage"},
-    {image = cardImg, type = "healing"},
-    {image = cardImg, type = "healing"},
-  }
+  playerCards = {}
+  enemyCards = {}
+
+  addCardsToHand(playerCards, 5)
+  addCardsToHand(enemyCards, 5)
 end
 
+function addCardsToHand(hand, num)
+  for i = 1, num do
+    table.insert(hand, possibleCards[math.random(#possibleCards)])
+  end
+end
 
 function love.update(dt)
   if not playerTurn then
@@ -80,6 +115,8 @@ function love.update(dt)
       enemyExecuteCard(enemyCards[enemySelectedCard])
       table.remove(enemyCards, enemySelectedCard)
 
+      enemyShieldCounter = enemyShieldCounter - 1
+      addCardsToHand(enemyCards, 1)
       playerTurn = true
       enemyThinkingPips = 0
       resetEnemyMoveTimer()
@@ -90,30 +127,68 @@ function love.update(dt)
   end
 end
 
+function drawHP()
+  local enemyHpY = enemyCardsY + 45
+  local playerHpY = playerCardsY - 40
 
-function love.draw(dt)
-  if not playerTurn then
-    love.graphics.print("Thinking...", 100, enemyCardsY - 5)
+  local img
+  local emptyImg
+
+  if playerShieldCounter > 0 then
+    img = shieldImg
+    emptyImg = shieldImg
+  else
+    img = hpImg
+    emptyImg = emptyHPImg
+  end
+  for i = 1, maxhp do
+    if i <= playerHP then
+      love.graphics.draw(img, i * 10, playerHpY)
+    else
+      love.graphics.draw(emptyImg, i * 10, playerHpY)
+    end
   end
 
+  if enemyShieldCounter > 0 then
+    img = shieldImg
+    emptyImg = shieldImg
+  else
+    img = hpImg
+    emptyImg = emptyHPImg
+  end
+  for i = 1, maxhp do
+    if i <= enemyHP then
+      love.graphics.draw(img, i * 10, enemyHpY)
+    else
+      love.graphics.draw(emptyImg, i * 10, enemyHpY)
+    end
+  end
+end
+
+function drawCards()
+  for i = 1, #playerCards do
+    love.graphics.draw(playerCards[i].image, 8 + i * 20, playerCardsY - (i % 2 * 3))
+  end
+  for i = 1, #enemyCards do
+    love.graphics.draw(enemyCards[i].image, 8 + i * 20, enemyCardsY - (i % 2 * 3))
+  end
+end
+
+function drawCursor()
+  love.graphics.draw(cursorImg, (selectedCard * 20) + 16, playerCardsY - 20)
+end
+
+function love.draw(dt)
   love.graphics.setBackgroundColor(158, 186, 15)
   love.graphics.scale(3)
 
-  for i = 1, playerHP do
-    love.graphics.draw(hpImg, i * 10, playerCardsY - 15)
-  end
-  for i = 1, enemyHP do
-    love.graphics.draw(hpImg, i * 10, enemyCardsY + 45)
-  end
+  drawHP()
+  drawCards()
+  drawCursor()
 
-  for i = 1, #playerCards do
-    love.graphics.draw(playerCards[i].image, i * 20, playerCardsY)
+  if not playerTurn then
+    love.graphics.draw(thinkingImg, 80, enemyCardsY + 45)
   end
-  for i = 1, #enemyCards do
-    love.graphics.draw(enemyCards[i].image, i * 20, enemyCardsY)
-  end
-
-  love.graphics.draw(cursorImg, (selectedCard * 20) + 10, playerCardsY - 5)
 end
 
 
@@ -132,6 +207,9 @@ function love.keypressed(key, scancode, isrepeat)
   if scancode == "k" and playerTurn then
     playerExecuteCard(playerCards[selectedCard])
     table.remove(playerCards, selectedCard)
+    selectedCard = 1
+    addCardsToHand(playerCards, 1)
     playerTurn = false
+    playerShieldCounter = playerShieldCounter - 1
   end
 end
