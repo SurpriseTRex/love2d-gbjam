@@ -83,7 +83,7 @@ function love.load(arg)
   emptyHPImg:setFilter("nearest", "nearest")
 
   thinkingImg = love.graphics.newImage("assets/thinking.png")
-  emptyHPImg:setFilter("nearest", "nearest")
+  thinkingImg:setFilter("nearest", "nearest")
 
   possibleCards = {
     {image = damCardImg, type = "damage"},
