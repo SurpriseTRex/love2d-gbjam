@@ -1,102 +1,132 @@
-local sti = require "sti"
+debug = true
 
-function love.load()
-    y_move = 0
-    windowWidth  = love.graphics.getWidth()
-    windowHeight = love.graphics.getHeight()
+cardImg = nil
+cursorImg = nil
+hpImg = nil
 
-    map = sti("assets/maps/map.lua")
-    map:addCustomLayer("Sprite Layer", 3)
+maxhp = 4
 
-    local spriteLayer = map.layers["Sprite Layer"]
+enemySelectedCard = 1
+enemyMoveTimer = 2
+enemyCardsY = 5
+enemyHP = maxhp
 
-    local player_img = love.graphics.newImage("assets/sprites/player.png")
-    local swing_img = love.graphics.newImage("assets/sprites/swing.png")
-    player_img:setFilter("nearest", "nearest")
-    swing_img:setFilter("nearest", "nearest")
+selectedCard = 1
+playerTurn = true
+playerCardsY = 100
+playerHP = maxhp
 
-    spriteLayer.sprites = {
-        player = {
-            image = player_img,
-            x = 64,
-            y = 64,
-            visible = true
-        },
-        swing = {
-            image = swing_img,
-            x = 64,
-            y = 64,
-            r = 0,
-            visible = false
-        }
-    }
 
-    player = spriteLayer.sprites.player
-    swing = spriteLayer.sprites.swing
-
-    function love.keypressed(key, scancode, isrepeat)
-      local step = 8
-
-      if scancode == "escape" then
-        love.event.push("quit")
-      end
-      if scancode == "w" and isrepeat == false then
-        player.y = player.y - step
-        swing.y = player.y - step
-        swing.x = player.x
-      end
-      if scancode == "s" and isrepeat == false then
-        player.y = player.y + step
-        swing.y = player.y + step
-        swing.x = player.x
-      end
-      if scancode == "a" and isrepeat == false then
-        player.x = player.x - step
-        swing.x = player.x - step
-        swing.y = player.y
-      end
-      if scancode == "d" and isrepeat == false then
-        player.x = player.x + step
-        swing.x = player.x + step
-        swing.y = player.y
-      end
-    end
-
-    function spriteLayer:update(dt)
-
-    end
-
-    function spriteLayer:draw()
-        for _, sprite in pairs(self.sprites) do
-            local x = math.floor(sprite.x)
-            local y = math.floor(sprite.y)
-
-            if sprite.visible then
-              love.graphics.draw(sprite.image, x, y, 0)
-            end
-        end
-    end
+function playerExecuteCard(card)
+  if card.type == "damage" then
+    enemyHP = enemyHP - 1
+  elseif card.type == "healing" then
+    playerHP = playerHP + 1
+  end
 end
+
+function enemyExecuteCard(card)
+  if card.type == "damage" then
+    playerHP = playerHP - 1
+  elseif card.type == "healing" then
+    enemyHP = enemyHP + 1
+  end
+end
+
+function resetEnemyMoveTimer()
+  enemyMoveTimer = 2
+end
+
+function decrementEnemyMoveTimer(dt)
+  enemyMoveTimer = enemyMoveTimer - dt
+end
+
+function love.load(arg)
+  cardImg = love.graphics.newImage('assets/card.png')
+  cardImg:setFilter("nearest", "nearest")
+
+  cursorImg = love.graphics.newImage("assets/cursor.png")
+  cursorImg:setFilter("nearest", "nearest")
+
+  hpImg = love.graphics.newImage("assets/cursor.png")
+  hpImg:setFilter("nearest", "nearest")
+
+  playerCards = {
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "healing"},
+  }
+
+  enemyCards = {
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "damage"},
+    {image = cardImg, type = "healing"},
+    {image = cardImg, type = "healing"},
+  }
+end
+
 
 function love.update(dt)
-    visible_timer = 100
+  if not playerTurn then
+    if enemyMoveTimer <= 0 then
+      enemySelectedCard = math.random(#enemyCards)
 
-    if visible_timer == 0 then
-      visible_timer = 100
-      swing.visible = not swing.visible
+      enemyExecuteCard(enemyCards[enemySelectedCard])
+      table.remove(enemyCards, enemySelectedCard)
+
+      playerTurn = true
+      resetEnemyMoveTimer()
+    else
+      decrementEnemyMoveTimer(dt)
     end
-
-    visible_timer = visible_timer - 1
-
-    map:update(dt)
+  end
 end
 
-function love.draw()
-    love.graphics.scale(3)
 
-    love.graphics.setColor(0, 0, 0, 255)
+function love.draw(dt)
+  if debug then
+    love.graphics.print("enemySelectedCard: " .. enemySelectedCard, 0, 0)
+  end
 
-    map:setDrawRange(0, 0, windowWidth, windowHeight)
+  love.graphics.setBackgroundColor(158, 186, 15)
+  love.graphics.scale(3)
 
-    map:draw()
+  for i = 1, playerHP do
+    love.graphics.draw(hpImg, i * 5, playerCardsY - 15, 0, .2)
+  end
+  for i = 1, enemyHP do
+    love.graphics.draw(hpImg, i * 5, enemyCardsY + 45, 0, .2)
+  end
+
+  for i = 1, #playerCards do
+    love.graphics.draw(playerCards[i].image, i * 20, playerCardsY)
+  end
+  for i = 1, #enemyCards do
+    love.graphics.draw(enemyCards[i].image, i * 20, enemyCardsY)
+  end
+
+  love.graphics.draw(cursorImg, (selectedCard * 20) + 10, playerCardsY - 5, 0, .3)
+end
+
+
+function love.keypressed(key, scancode, isrepeat)
+  if scancode == "escape" then
+    love.event.push("quit")
+  end
+
+  if (scancode == "a" or scancode == "w") and selectedCard > 1 then
+    selectedCard = selectedCard - 1
+  end
+  if (scancode == "s" or scancode == "d") and selectedCard < #playerCards then
+    selectedCard = selectedCard + 1
+  end
+
+  if scancode == "k" and playerTurn then
+    playerExecuteCard(playerCards[selectedCard])
+    table.remove(playerCards, selectedCard)
+    playerTurn = false
+  end
 end
