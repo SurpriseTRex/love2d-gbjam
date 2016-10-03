@@ -10,6 +10,9 @@ enemySelectedCard = 1
 enemyMoveTimer = 2
 enemyCardsY = 5
 enemyHP = maxhp
+enemyThinkingPips = 0
+thinkTick = 1
+thinkCounter = 0
 
 selectedCard = 1
 playerTurn = true
@@ -48,7 +51,7 @@ function love.load(arg)
   cursorImg = love.graphics.newImage("assets/cursor.png")
   cursorImg:setFilter("nearest", "nearest")
 
-  hpImg = love.graphics.newImage("assets/cursor.png")
+  hpImg = love.graphics.newImage("assets/heart.png")
   hpImg:setFilter("nearest", "nearest")
 
   playerCards = {
@@ -78,7 +81,9 @@ function love.update(dt)
       table.remove(enemyCards, enemySelectedCard)
 
       playerTurn = true
+      enemyThinkingPips = 0
       resetEnemyMoveTimer()
+
     else
       decrementEnemyMoveTimer(dt)
     end
@@ -87,18 +92,18 @@ end
 
 
 function love.draw(dt)
-  if debug then
-    love.graphics.print("enemySelectedCard: " .. enemySelectedCard, 0, 0)
+  if not playerTurn then
+    love.graphics.print("Thinking...", 100, enemyCardsY - 5)
   end
 
   love.graphics.setBackgroundColor(158, 186, 15)
   love.graphics.scale(3)
 
   for i = 1, playerHP do
-    love.graphics.draw(hpImg, i * 5, playerCardsY - 15, 0, .2)
+    love.graphics.draw(hpImg, i * 10, playerCardsY - 15)
   end
   for i = 1, enemyHP do
-    love.graphics.draw(hpImg, i * 5, enemyCardsY + 45, 0, .2)
+    love.graphics.draw(hpImg, i * 10, enemyCardsY + 45)
   end
 
   for i = 1, #playerCards do
@@ -108,7 +113,7 @@ function love.draw(dt)
     love.graphics.draw(enemyCards[i].image, i * 20, enemyCardsY)
   end
 
-  love.graphics.draw(cursorImg, (selectedCard * 20) + 10, playerCardsY - 5, 0, .3)
+  love.graphics.draw(cursorImg, (selectedCard * 20) + 10, playerCardsY - 5)
 end
 
 
