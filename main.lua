@@ -1,5 +1,7 @@
 debug = true
 
+font = nil
+
 card2Img = nil
 healCardImg = nil
 cursorImg = nil
@@ -23,32 +25,34 @@ playerCardsY = 110
 playerHP = 4
 playerShieldCounter = 0
 
+infoWindowOpen = false
+
 
 function playerExecuteCard(card)
-  if card.type == "damage" then
+  if card.type == "DAMAGE" then
     if enemyShieldCounter <= 0 then
       enemyHP = enemyHP - 1
     end
-  elseif card.type == "healing" then
+  elseif card.type == "HEALING" then
     if playerHP < maxhp then
       playerHP = playerHP + 1
     end
-  elseif card.type == "shield" then
-    playerShieldCounter = 2
+  elseif card.type == "SHIELD" then
+    playerShieldCounter = 3
   end
 end
 
 function enemyExecuteCard(card)
-  if card.type == "damage" then
+  if card.type == "DAMAGE" then
     if playerShieldCounter <= 0 then
       playerHP = playerHP - 1
     end
-  elseif card.type == "healing" then
+  elseif card.type == "HEALING" then
     if enemyHP < maxhp then
       enemyHP = enemyHP + 1
     end
-  elseif card.type == "shield" then
-    enemyShieldCounter = 2
+  elseif card.type == "SHIELD" then
+    enemyShieldCounter = 3
   end
 end
 
@@ -85,13 +89,32 @@ function love.load(arg)
   thinkingImg = love.graphics.newImage("assets/thinking.png")
   thinkingImg:setFilter("nearest", "nearest")
 
+  windowImg = love.graphics.newImage("assets/infowindow2.png")
+  windowImg:setFilter("nearest", "nearest")
+
+  font = love.graphics.newImageFont("assets/font.png",
+    " abcdefghijklmnopqrstuvwxyz" ..
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
+    "123456789.,!?-+/():;%&`'*#=[]\"")
+  font:setFilter("nearest", "nearest")
+
+  math.randomseed(os.time())
+
+  damDesc = "DEAL 1 DMG TO ENEMY."
+  healDesc = "HEAL 1 HP."
+  shieldDesc = "BLOCK 2 ENEMY TURNS."
+
   possibleCards = {
-    {image = damCardImg, type = "damage"},
-    {image = damCardImg, type = "damage"},
-    {image = damCardImg, type = "damage"},
-    {image = damCardImg, type = "damage"},
-    {image = shieldCardImg, type = "shield"},
-    {image = healCardImg, type = "healing"}
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc},
+    {image = shieldCardImg, type = "SHIELD", desc = shieldDesc},
+    {image = healCardImg, type = "HEALING", desc = healDesc},
+    {image = healCardImg, type = "HEALING", desc = healDesc}
   }
 
   playerCards = {}
@@ -178,8 +201,17 @@ function drawCursor()
   love.graphics.draw(cursorImg, (selectedCard * 20) + 16, playerCardsY - 20)
 end
 
+function drawInfoWindow(card)
+  love.graphics.draw(windowImg, 20, 20)
+  love.graphics.draw(card.image, 32, 50)
+  
+  love.graphics.printf(card.type, 25, 24, 110, "center")
+  love.graphics.printf(card.desc, 64, 48, 72)
+end
+
 function love.draw(dt)
   love.graphics.setBackgroundColor(158, 186, 15)
+  love.graphics.setFont(font)
   love.graphics.scale(3)
 
   drawHP()
@@ -188,6 +220,10 @@ function love.draw(dt)
 
   if not playerTurn then
     love.graphics.draw(thinkingImg, 80, enemyCardsY + 45)
+  end
+
+  if infoWindowOpen then
+    drawInfoWindow(playerCards[selectedCard])
   end
 end
 
@@ -202,6 +238,10 @@ function love.keypressed(key, scancode, isrepeat)
   end
   if (scancode == "s" or scancode == "d") and selectedCard < #playerCards then
     selectedCard = selectedCard + 1
+  end
+
+  if scancode == "j" then
+    infoWindowOpen = not infoWindowOpen
   end
 
   if scancode == "k" and playerTurn then
