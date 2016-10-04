@@ -11,18 +11,18 @@ cursorImg = nil
 hpImg = nil
 emptyHPImg = nil
 
-maxhp = 5
+maxhp = 7
 
 enemySelectedCard = 1
 enemyMoveTimer = 2
 enemyCardsY = 10
-enemyHP = 4
+enemyHP = maxhp
 enemyShieldCounter = 0
 
 selectedCard = 1
 playerTurn = true
 playerCardsY = 110
-playerHP = 4
+playerHP = maxhp
 playerShieldCounter = 0
 
 infoWindowOpen = false
@@ -251,10 +251,10 @@ function love.draw(dt)
   love.graphics.setFont(font)
   love.graphics.scale(3)
 
-  if not gameOver then
-    drawGameScreen()
+  if gameOver then
+    drawGameOverScreen(gameWon)
   else
-    drawGameOverScreen()
+    drawGameScreen()
   end
 end
 
