@@ -1,5 +1,8 @@
 debug = true
 
+gameOver = nil
+gameWon = nil
+
 font = nil
 
 card2Img = nil
@@ -14,9 +17,6 @@ enemySelectedCard = 1
 enemyMoveTimer = 2
 enemyCardsY = 10
 enemyHP = 4
-enemyThinkingPips = 0
-thinkTick = 1
-thinkCounter = 0
 enemyShieldCounter = 0
 
 selectedCard = 1
@@ -131,6 +131,13 @@ function addCardsToHand(hand, num)
 end
 
 function love.update(dt)
+  if playerHP < 1 then
+    gameOver = true
+  elseif enemyHP < 1 then
+    gameOver = true
+    gameWon = true
+  end
+
   if not playerTurn then
     if enemyMoveTimer <= 0 then
       enemySelectedCard = math.random(#enemyCards)
@@ -215,11 +222,8 @@ function drawInfoWindow(card)
   love.graphics.printf(card.value..card.desc, 64, 48, 72)
 end
 
-function love.draw(dt)
+function drawGameScreen()
   love.graphics.setBackgroundColor(158, 186, 15)
-  love.graphics.setFont(font)
-  love.graphics.scale(3)
-
   drawHP()
   drawCards()
   drawCursor()
@@ -230,6 +234,27 @@ function love.draw(dt)
 
   if infoWindowOpen then
     drawInfoWindow(playerCards[selectedCard])
+  end
+end
+
+function drawGameOverScreen(win)
+  love.graphics.setBackgroundColor(13, 52, 3)
+
+  if win then
+    love.graphics.printf("WIN", 0, 64, 160, "center")
+  else
+    love.graphics.printf("LOSE", 0, 64, 160, "center")
+  end
+end
+
+function love.draw(dt)
+  love.graphics.setFont(font)
+  love.graphics.scale(3)
+
+  if not gameOver then
+    drawGameScreen()
+  else
+    drawGameOverScreen()
   end
 end
 
