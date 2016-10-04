@@ -31,28 +31,28 @@ infoWindowOpen = false
 function playerExecuteCard(card)
   if card.type == "DAMAGE" then
     if enemyShieldCounter <= 0 then
-      enemyHP = enemyHP - 1
+      enemyHP = enemyHP - card.value
     end
   elseif card.type == "HEALING" then
     if playerHP < maxhp then
-      playerHP = playerHP + 1
+      playerHP = playerHP + card.value
     end
   elseif card.type == "SHIELD" then
-    playerShieldCounter = 3
+    playerShieldCounter = card.value
   end
 end
 
 function enemyExecuteCard(card)
   if card.type == "DAMAGE" then
     if playerShieldCounter <= 0 then
-      playerHP = playerHP - 1
+      playerHP = playerHP - card.value
     end
   elseif card.type == "HEALING" then
     if enemyHP < maxhp then
-      enemyHP = enemyHP + 1
+      enemyHP = enemyHP + card.value
     end
   elseif card.type == "SHIELD" then
-    enemyShieldCounter = 3
+    enemyShieldCounter = card.value
   end
 end
 
@@ -100,21 +100,21 @@ function love.load(arg)
 
   math.randomseed(os.time())
 
-  damDesc = "DEAL 1 DMG TO ENEMY."
-  healDesc = "HEAL 1 HP."
-  shieldDesc = "BLOCK 2 ENEMY TURNS."
+  damDesc = " DMG TO ENEMY."
+  healDesc = " HP RESTORE."
+  shieldDesc = " TURN DMG BLOCK."
 
   possibleCards = {
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc},
-    {image = shieldCardImg, type = "SHIELD", desc = shieldDesc},
-    {image = healCardImg, type = "HEALING", desc = healDesc},
-    {image = healCardImg, type = "HEALING", desc = healDesc}
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 2},
+    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 3},
+    {image = shieldCardImg, type = "SHIELD", desc = shieldDesc, value = 2},
+    {image = healCardImg, type = "HEALING", desc = healDesc, value = 3},
+    {image = healCardImg, type = "HEALING", desc = healDesc, value = 2}
   }
 
   playerCards = {}
@@ -138,7 +138,7 @@ function love.update(dt)
       enemyExecuteCard(enemyCards[enemySelectedCard])
       table.remove(enemyCards, enemySelectedCard)
 
-      enemyShieldCounter = enemyShieldCounter - 1
+      playerShieldCounter = playerShieldCounter - 1
       addCardsToHand(enemyCards, 1)
       playerTurn = true
       enemyThinkingPips = 0
@@ -190,7 +190,13 @@ end
 
 function drawCards()
   for i = 1, #playerCards do
-    love.graphics.draw(playerCards[i].image, 8 + i * 20, playerCardsY - (i % 2 * 3))
+    if i == selectedCard then
+      offset = (i % 2 * 2) + 8
+    else
+      offset = (i % 2 * 3)
+    end
+    love.graphics.draw(playerCards[i].image, 8 + i * 20, playerCardsY - offset)
+    love.graphics.print(playerCards[i].value, 8 + i * 20, playerCardsY - offset)
   end
   for i = 1, #enemyCards do
     love.graphics.draw(enemyCards[i].image, 8 + i * 20, enemyCardsY - (i % 2 * 3))
@@ -204,9 +210,9 @@ end
 function drawInfoWindow(card)
   love.graphics.draw(windowImg, 20, 20)
   love.graphics.draw(card.image, 32, 50)
-  
+
   love.graphics.printf(card.type, 25, 24, 110, "center")
-  love.graphics.printf(card.desc, 64, 48, 72)
+  love.graphics.printf(card.value..card.desc, 64, 48, 72)
 end
 
 function love.draw(dt)
@@ -249,7 +255,7 @@ function love.keypressed(key, scancode, isrepeat)
     table.remove(playerCards, selectedCard)
     selectedCard = 1
     addCardsToHand(playerCards, 1)
+    enemyShieldCounter = enemyShieldCounter - 1
     playerTurn = false
-    playerShieldCounter = playerShieldCounter - 1
   end
 end
