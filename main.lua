@@ -92,7 +92,7 @@ function love.load(arg)
   windowImg = love.graphics.newImage("assets/infowindow2.png")
   windowImg:setFilter("nearest", "nearest")
 
-  font = love.graphics.newImageFont("assets/font.png",
+  font = love.graphics.newImageFont("assets/customfont2.png",
     " abcdefghijklmnopqrstuvwxyz" ..
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
     "123456789.,!?-+/():;%&`'*#=[]\"")
@@ -100,21 +100,17 @@ function love.load(arg)
 
   math.randomseed(os.time())
 
-  damDesc = " DMG TO ENEMY."
-  healDesc = " HP RESTORE."
-  shieldDesc = " TURN DMG BLOCK."
-
   possibleCards = {
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 1},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 2},
-    {image = damCardImg, type = "DAMAGE", desc = damDesc, value = 3},
-    {image = shieldCardImg, type = "SHIELD", desc = shieldDesc, value = 2},
-    {image = healCardImg, type = "HEALING", desc = healDesc, value = 3},
-    {image = healCardImg, type = "HEALING", desc = healDesc, value = 2}
+    {image = damCardImg, type = "DAMAGE", value = 1},
+    {image = damCardImg, type = "DAMAGE", value = 1},
+    {image = damCardImg, type = "DAMAGE", value = 1},
+    {image = damCardImg, type = "DAMAGE", value = 1},
+    {image = damCardImg, type = "DAMAGE", value = 1},
+    {image = damCardImg, type = "DAMAGE", value = 2},
+    {image = damCardImg, type = "DAMAGE", value = 3},
+    {image = shieldCardImg, type = "SHIELD", value = 2},
+    {image = healCardImg, type = "HEALING", value = 3},
+    {image = healCardImg, type = "HEALING", value = 2}
   }
 
   playerCards = {}
@@ -148,7 +144,6 @@ function love.update(dt)
       playerShieldCounter = playerShieldCounter - 1
       addCardsToHand(enemyCards, 1)
       playerTurn = true
-      enemyThinkingPips = 0
       resetEnemyMoveTimer()
 
     else
@@ -203,7 +198,7 @@ function drawCards()
       offset = (i % 2 * 3)
     end
     love.graphics.draw(playerCards[i].image, 8 + i * 20, playerCardsY - offset)
-    love.graphics.print(playerCards[i].value, 8 + i * 20, playerCardsY - offset)
+    love.graphics.print(playerCards[i].value, 16 + i * 20, playerCardsY - offset + 18)
   end
   for i = 1, #enemyCards do
     love.graphics.draw(enemyCards[i].image, 8 + i * 20, enemyCardsY - (i % 2 * 3))
@@ -218,8 +213,18 @@ function drawInfoWindow(card)
   love.graphics.draw(windowImg, 20, 20)
   love.graphics.draw(card.image, 32, 50)
 
-  love.graphics.printf(card.type, 25, 24, 110, "center")
-  love.graphics.printf(card.value..card.desc, 64, 48, 72)
+  love.graphics.printf(card.type, 25, 28, 110, "center")
+  love.graphics.printf(getDescription(card), 64, 50, 72)
+end
+
+function getDescription(card)
+  if card.type == "DAMAGE" then
+    return "Deal "..card.value.." damage."
+  elseif card.type == "HEALING" then
+    return "Heal "..card.value.." HP."
+  elseif card.type == "SHIELD" then
+    return "Shield for "..card.value.." turns."
+  end
 end
 
 function drawGameScreen()
@@ -229,7 +234,7 @@ function drawGameScreen()
   drawCursor()
 
   if not playerTurn then
-    love.graphics.draw(thinkingImg, 80, enemyCardsY + 45)
+    love.graphics.draw(thinkingImg, 88, enemyCardsY + 45)
   end
 
   if infoWindowOpen then
@@ -238,7 +243,7 @@ function drawGameScreen()
 end
 
 function drawGameOverScreen(win)
-  love.graphics.setBackgroundColor(13, 52, 3)
+  love.graphics.setBackgroundColor(48, 97, 48)
 
   if win then
     love.graphics.printf("WIN", 0, 64, 160, "center")
